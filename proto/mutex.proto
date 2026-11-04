@@ -1,0 +1,20 @@
+syntax = "proto3";
+package mutex;
+option go_package ="MandatoryActivity4/proto";
+
+service Mutex {
+    rpc Request (CallRequest) returns (Empty);
+    rpc Reply (MsgReply) returns (Empty);
+}
+
+message Empty {}
+
+ message CallRequest {
+    int64 timestamp = 1;
+    int32 id = 2;
+ }
+
+
+message MsgReply {
+    int32 id = 1;
+}
