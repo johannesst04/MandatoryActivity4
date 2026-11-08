@@ -42,32 +42,32 @@ func (n *Node) Request(ctx context.Context, req *proto.CallRequest) (*proto.Empt
 	defer n.mu.Unlock()
 
 	if !n.requesting && !n.inCriticalSection{
-		fmt.Printf("Node %d: Permission granted to node: %d\n",n.id,req.GetId())
+		fmt.Printf("NODE %d: Permission granted to node: %d\n",n.id,req.GetId())
 		if err := n.grantPermission(req.GetId()); err != nil {
         return nil, err
     	}
 		}else if n.inCriticalSection{
 		n.deferredReplies[req.GetId()] = true
-		fmt.Printf("NODE %d: Logs request from node: %d\n",n.id,req.GetId())
+		fmt.Printf("NODE %d: Deferred request from node: %d\n",n.id,req.GetId())
 	}else if n.requesting{
 		if req.GetTimestamp() < n.requestTimestamp{
-			fmt.Printf("Node %d: Permission granted to node: %d\n",n.id,req.GetId())
+			fmt.Printf("NODE %d: Permission granted to node: %d\n",n.id,req.GetId())
 			if err := n.grantPermission(req.GetId()); err != nil {
         	return nil, err
     		}
 		}else if req.GetTimestamp() == n.requestTimestamp{
 			if req.GetId() < n.id{
-				fmt.Printf("Node %d: Permission granted to node: %d\n",n.id,req.GetId())
+				fmt.Printf("NODE %d: Permission granted to node: %d\n",n.id,req.GetId())
 				if err := n.grantPermission(req.GetId()); err != nil {
         		return nil, err
     			}
 			}else{
 				n.deferredReplies[req.GetId()] = true
-				fmt.Printf("NODE %d: Logs request from node: %d\n",n.id,req.GetId())
+				fmt.Printf("NODE %d: Deferred request from node: %d\n",n.id,req.GetId())
 			}
 		}else{
 			n.deferredReplies[req.GetId()] = true
-			fmt.Printf("NODE %d: Logs request from node: %d\n",n.id,req.GetId())
+			fmt.Printf("NODE %d: Deferred request from node: %d\n",n.id,req.GetId())
 		}
 	}
 
@@ -82,12 +82,12 @@ func (n *Node) Reply(ctx context.Context, reply *proto.MsgReply) (*proto.Empty, 
     n.receivedReplies[reply.GetId()] = true
 
     fmt.Printf(
-        "Node %d received reply from node %d\n",
+        "Node %d: Received reply from node %d\n",
         n.id,
         reply.GetId(),
     )
 
-    if len(n.receivedReplies) == len(n.peers) {
+    if n.requesting && len(n.receivedReplies) == len(n.peers) {
         go n.EnterCriticalSection()
     }
 
@@ -101,12 +101,12 @@ func (n *Node) EnterCriticalSection() {
 
     n.mu.Unlock()
 
-    fmt.Printf("Node %d ENTERED critical section\n", n.id)
+    fmt.Printf("NODE %d: Entered critical section\n", n.id)
 
     // Simulated critical section
     time.Sleep(2 * time.Second)
 
-    fmt.Printf("Node %d EXITED critical section\n", n.id)
+    fmt.Printf("NODE %d: Exited critical section\n", n.id)
 
     n.mu.Lock()
 
@@ -148,7 +148,7 @@ func (n *Node) RequestCriticalSection() {
     n.mu.Unlock()
 
     fmt.Printf(
-        "Node %d requesting critical section at timestamp %d\n",
+        "NODE %d: Requesting critical section at timestamp %d\n",
         n.id,
         timestamp,
     )
@@ -179,6 +179,16 @@ func (n *Node) grantPermission(nodeID int32) error {
     )
 
     return err
+}
+
+func (n *Node) AddPeer(
+    id int32,
+    client proto.MutexClient,
+) {
+    n.mu.Lock()
+    defer n.mu.Unlock()
+
+    n.peers[id] = client
 }
 
 	
