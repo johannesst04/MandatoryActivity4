@@ -38,8 +38,6 @@ func main() {
 
     time.Sleep(time.Second)
 
-    // TODO:
-    // Create grpc client connections
 	conn12, _ := grpc.Dial("localhost:5002", grpc.WithInsecure())
 	conn13, _ := grpc.Dial("localhost:5003", grpc.WithInsecure())
 
@@ -48,10 +46,7 @@ func main() {
 
 	conn31, _ := grpc.Dial("localhost:5001", grpc.WithInsecure())
 	conn32, _ := grpc.Dial("localhost:5002", grpc.WithInsecure())
-	
-    // Create MutexClient objects
 
-    // Add peers to node1, node2, node3
 	node1.AddPeer(2, proto.NewMutexClient(conn12))
 	node1.AddPeer(3, proto.NewMutexClient(conn13))
 
@@ -61,12 +56,15 @@ func main() {
 	node3.AddPeer(1, proto.NewMutexClient(conn31))
 	node3.AddPeer(2, proto.NewMutexClient(conn32))
 
-    // Trigger RequestCriticalSection()
 	go node1.RequestCriticalSection()
 
-	time.Sleep(time.Second)
+	time.Sleep(100 * time.Millisecond)
 
 	go node2.RequestCriticalSection()
+
+	time.Sleep(100 * time.Millisecond)
+
+	go node3.RequestCriticalSection()
 
     select {}
 }
