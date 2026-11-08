@@ -42,32 +42,32 @@ func (n *Node) Request(ctx context.Context, req *proto.CallRequest) (*proto.Empt
 	defer n.mu.Unlock()
 
 	if !n.requesting && !n.inCriticalSection{
-		fmt.Printf("NODE %d: Permission granted to node: %d\n",n.id,req.GetId())
+		fmt.Printf("NODE %d: Permission granted to Node: %d\n",n.id,req.GetId())
 		if err := n.grantPermission(req.GetId()); err != nil {
         return nil, err
     	}
 		}else if n.inCriticalSection{
 		n.deferredReplies[req.GetId()] = true
-		fmt.Printf("NODE %d: Deferred request from node: %d\n",n.id,req.GetId())
+		fmt.Printf("NODE %d: Deferred request from Node: %d\n",n.id,req.GetId())
 	}else if n.requesting{
 		if req.GetTimestamp() < n.requestTimestamp{
-			fmt.Printf("NODE %d: Permission granted to node: %d\n",n.id,req.GetId())
+			fmt.Printf("NODE %d: Permission granted to Node: %d\n",n.id,req.GetId())
 			if err := n.grantPermission(req.GetId()); err != nil {
         	return nil, err
     		}
 		}else if req.GetTimestamp() == n.requestTimestamp{
 			if req.GetId() < n.id{
-				fmt.Printf("NODE %d: Permission granted to node: %d\n",n.id,req.GetId())
+				fmt.Printf("NODE %d: Permission granted to Node: %d\n",n.id,req.GetId())
 				if err := n.grantPermission(req.GetId()); err != nil {
         		return nil, err
     			}
 			}else{
 				n.deferredReplies[req.GetId()] = true
-				fmt.Printf("NODE %d: Deferred request from node: %d\n",n.id,req.GetId())
+				fmt.Printf("NODE %d: Deferred request from Node: %d\n",n.id,req.GetId())
 			}
 		}else{
 			n.deferredReplies[req.GetId()] = true
-			fmt.Printf("NODE %d: Deferred request from node: %d\n",n.id,req.GetId())
+			fmt.Printf("NODE %d: Deferred request from Node: %d\n",n.id,req.GetId())
 		}
 	}
 
@@ -82,7 +82,7 @@ func (n *Node) Reply(ctx context.Context, reply *proto.MsgReply) (*proto.Empty, 
     n.receivedReplies[reply.GetId()] = true
 
     fmt.Printf(
-        "Node %d: Received reply from node %d\n",
+        "NODE %d: Received reply from Node: %d\n",
         n.id,
         reply.GetId(),
     )
@@ -126,7 +126,7 @@ func (n *Node) EnterCriticalSection() {
     for _, id := range deferred {
         if err := n.grantPermission(id); err != nil {
             fmt.Printf(
-                "Failed to grant deferred permission to %d: %v\n",
+                "Failed to grant deferred permission to Node: %d: %v\n",
                 id,
                 err,
             )
